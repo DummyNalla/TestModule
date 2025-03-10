@@ -12,7 +12,7 @@
     "quality": "720p",
     "baseUrl": "https://www.dailymotion.com",
     "searchBaseUrl": "https://www.dailymotion.com/search/%s",
-    "scriptUrl": "https://example.com/your-dailymotion-script.js",
+    "scriptUrl": "https://raw.githubusercontent.com/DummyNalla/TestModule/refs/heads/main/dailymotion.js",
     "asyncJS": true,
     "streamAsyncJS": false
 }
