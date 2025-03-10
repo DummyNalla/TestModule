@@ -1,60 +1,69 @@
-const baseUrl = "https://api.dailymotion.com";
-
 async function searchResults(keyword) {
     try {
-        const response = await fetch(`${baseUrl}/videos?fields=id,title,thumbnail_360_url&limit=10&search=${encodeURIComponent(keyword)}`);
-        const data = await response.json();
+        const encodedKeyword = encodeURIComponent(keyword);
+        const response = await fetch(`https://anitaku.to/search.html?keyword=${encodedKeyword}`);
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
         
-        const results = data.list.map(item => ({
-            title: item.title,
-            href: `https://www.dailymotion.com/video/${item.id}`,
-            image: item.thumbnail_360_url
-        }));
+        const results = [];
+        
+        doc.querySelectorAll(".last_episodes li").forEach(item => {
+            const title = item.querySelector(".name").textContent.replace(" (Dub)", "");
+            const url = item.querySelector(".name a").href;
+            const poster = item.querySelector("img").src;
+            results.push({
+                title: title,
+                image: poster,
+                href: url
+            });
+        });
 
         return JSON.stringify(results);
     } catch (error) {
-        console.log('Error during search: ', error);
-        return JSON.stringify([]);
+        console.log('Error:', error);
+        return JSON.stringify([{ title: 'Error', image: '', href: '' }]);
     }
 }
 
 async function extractDetails(url) {
     try {
-        const videoId = url.split('/video/')[1];
-        const response = await fetch(`${baseUrl}/video/${videoId}?fields=id,title,description,thumbnail_720_url`);
-        const data = await response.json();
+        const response = await fetch(url);
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
         
-        const details = [{
-            description: data.description || 'No description available',
-            aliases: '',  // Aliases can be fetched if available
-            airdate: ''   // Airdate can be fetched if available
-        }];
+        const title = doc.querySelector(".anime_info_body_bg h1").textContent.replace(" (Dub)", "");
+        const description = doc.querySelector(".anime_info_body_bg p.plot")?.textContent || 'No description available';
+        const year = doc.querySelector(".anime_info_body_bg p.released")?.textContent;
         
-        return JSON.stringify(details);
-    } catch (error) {
-        console.log('Error fetching video details: ', error);
         return JSON.stringify([{
-            description: 'Error loading description',
-            aliases: '',
-            airdate: 'Aired: Unknown'
+            description: description,
+            year: year,
+            title: title
         }]);
+    } catch (error) {
+        console.log('Details error:', error);
+        return JSON.stringify([{ description: 'Error loading description', year: 'Unknown', title: 'Error' }]);
     }
 }
 
 async function extractEpisodes(url) {
-    // Assuming episodes are not applicable for this type, but can be added later.
-    return JSON.stringify([]);
-}
-
-async function extractStreamUrl(url) {
-    const videoId = url.split('/video/')[1];
     try {
-        const response = await fetch(`${baseUrl}/video/${videoId}?fields=id`);
-        const data = await response.json();
-        const streamUrl = `https://www.dailymotion.com/embed/video/${data.id}`;
-        return streamUrl;  // Return the direct streaming URL
+        const response = await fetch(url);
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        
+        const episodes = [];
+        
+        doc.querySelectorAll(".episodes a").forEach(item => {
+            episodes.push({
+                href: item.href,
+                title: item.textContent
+            });
+        });
+        
+        return JSON.stringify(episodes);
     } catch (error) {
-        console.log('Error fetching stream URL: ', error);
-        return '';
+        console.log('Episodes error:', error);
+        return JSON.stringify([]);
     }
 }
