@@ -6,7 +6,7 @@
         "name": "Your Name",
         "icon": "https://example.com/your-icon.png"
     },
-    "version": "1.0.0",
+    "version": "1.0.2",
     "language": "English",
     "streamType": "HLS",
     "quality": "720p",
